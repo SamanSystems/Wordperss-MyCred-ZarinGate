@@ -8,7 +8,7 @@
 * Tested up to: 4.1
 */
 require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
-if ( is_plugin_active('mycred/mycred.php') && defined( 'myCRED_VERSION' ) ) {
+if ( is_plugin_active('mycred/mycred.php') && defined( 'myCRED_VERSION' ) && class_exists( 'myCRED_Payment_Gateway' ) ) {
 	
     add_filter('mycred_setup_gateways', 'Add_Zaringate_to_Gateways_By_HANNANStd');
 	function Add_Zaringate_to_Gateways_By_HANNANStd($installed) {    
