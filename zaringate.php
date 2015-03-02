@@ -1,56 +1,56 @@
 <?php
 /**
-* Plugin Name: درگاه زرین پال myCRED
-* Description: این افزونه درگاه زرین پال را به افزونه myCRED اضافه میکند .
+* Plugin Name: درگاه زرین گیت myCRED
+* Description: این افزونه درگاه زرین گیت را به افزونه myCRED اضافه میکند .
 * Version: 1.0.0
 * Author: حنان ابراهیمی ستوده
 * Author URI: http://hannanstd.ir
 * Tested up to: 4.1
 */
-add_action('mycred_buycred_load_gateways', 'mycred_zarinpal_loader');
-function mycred_zarinpal_loader(){
+add_action('mycred_buycred_load_gateways',  'mycred_zaringate_loader');
+function mycred_zaringate_loader(){
 	require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
 	if ( is_plugin_active('mycred/mycred.php') && defined( 'myCRED_VERSION' ) && class_exists( 'myCRED_Payment_Gateway' ) ) {
 	
-		add_filter('mycred_setup_gateways', 'Add_Zarinpal_to_Gateways_By_HANNANStd');
-		function Add_Zarinpal_to_Gateways_By_HANNANStd($installed) {    
-			$installed['zarinpal'] = array(
-				'title' => get_option('zarinpal_name') ? get_option('zarinpal_name') : 'زرین پال',
-				'callback' => array('myCred_Zarinpal')
+		add_filter('mycred_setup_gateways', 'Add_Zaringate_to_Gateways_By_HANNANStd');
+		function Add_Zaringate_to_Gateways_By_HANNANStd($installed) {    
+			$installed['zaringate'] = array(
+				'title' => get_option('zaringate_name') ? get_option('zaringate_name') : 'زرین گیت',
+				'callback' => array('myCred_Zaringate')
 			);
 			return $installed;
 		}
 
 	
 		if ( class_exists( 'myCRED_buyCRED_Module' ) ) {
-			add_filter('mycred_buycred_refs', 'Add_Zarinpal_to_Buycred_Refs_By_HANNANStd');
-			function Add_Zarinpal_to_Buycred_Refs_By_HANNANStd($addons ) {    
-				$addons['buy_creds_with_zarinpal']          = __( 'buyCRED Purchase (ZarinpPal)', 'mycred' );
+			add_filter('mycred_buycred_refs', 'Add_Zaringate_to_Buycred_Refs_By_HANNANStd');
+			function Add_Zaringate_to_Buycred_Refs_By_HANNANStd($addons ) {    
+				$addons['buy_creds_with_zaringate']          = __( 'buyCRED Purchase (ZarinpGate)', 'mycred' );
 				return $addons;
 			}
 		}
-	
-		add_filter('mycred_buycred_log_refs', 'Add_Zarinpal_to_Buycred_Log_Refs_By_HANNANStd');
-		function Add_Zarinpal_to_Buycred_Log_Refs_By_HANNANStd( $references, $this, $type ) {
-			$zarinpal = array('buy_creds_with_zarinpal');
-			return array_merge($references, $zarinpal);
+		
+		add_filter('mycred_buycred_log_refs', 'Add_Zaringate_to_Buycred_Log_Refs_By_HANNANStd');
+		function Add_Zaringate_to_Buycred_Log_Refs_By_HANNANStd( $references, $this, $type ) {
+			$zaringate = array('buy_creds_with_zaringate');
+			return array_merge($references, $zaringate);
 		}
 
-		if ( !class_exists( 'myCred_Zarinpal' ) ) {
-			class myCred_Zarinpal extends myCRED_Payment_Gateway {
+		if ( !class_exists( 'myCred_Zaringate' ) ) {
+			class myCred_Zaringate extends myCRED_Payment_Gateway {
 	
 				function __construct($gateway_prefs) {        
 					$types = mycred_get_types();
 					$default_exchange = array();
 					foreach ($types as $type => $label)
 						$default_exchange[$type] = 1000;
-	
+
 					parent::__construct(array(
-						'id' => 'zarinpal',
-						'label' => get_option('zarinpal_name') ? get_option('zarinpal_name') : 'زرین پال',
+						'id' => 'zaringate',
+						'label' => get_option('zaringate_name') ? get_option('zaringate_name') : 'زرین گیت',
 							'defaults'         => array(
-								'zarinpal_merchant'          => '',
-								'zarinpal_name'          => 'زرین پال',
+								'zaringate_merchant'          => '',
+								'zaringate_name'          => 'زرین گیت',
 								'currency'         => 'ریال',
 								'exchange'         => $default_exchange,
 								'item_name'        => __( 'Purchase of myCRED %plural%', 'mycred' ),
@@ -59,7 +59,7 @@ function mycred_zarinpal_loader(){
 					), $gateway_prefs );
 				}
 		
-				public function Zarinpal_Iranian_currencies_By_HANNANStd( $currencies ) {
+				public function Zaringate_Iranian_currencies_By_HANNANStd( $currencies ) {
 					unset( $currencies );
 					$currencies['ریال'] = 'ریال';
 					$currencies['تومان'] = 'تومان';
@@ -72,28 +72,28 @@ function mycred_zarinpal_loader(){
 				* @version 1.0
 				*/
 				function preferences() {
-					add_filter( 'mycred_dropdown_currencies', array( $this, 'Zarinpal_Iranian_currencies_By_HANNANStd' ) );
+					add_filter( 'mycred_dropdown_currencies', array( $this, 'Zaringate_Iranian_currencies_By_HANNANStd' ) );
 					$prefs = $this->prefs; ?>
 
-					<label class="subheader" for="<?php echo $this->field_id( 'zarinpal_merchant' ); ?>"><?php _e( 'مرچنت', 'mycred' ); ?></label>
+					<label class="subheader" for="<?php echo $this->field_id( 'zaringate_merchant' ); ?>"><?php _e( 'مرچنت', 'mycred' ); ?></label>
 					<ol>
 						<li>
-							<div class="h2"><input type="text" name="<?php echo $this->field_name( 'zarinpal_merchant' ); ?>" id="<?php echo $this->field_id( 'zarinpal_merchant' ); ?>" value="<?php echo $prefs['zarinpal_merchant']; ?>" class="long" /></div>
+							<div class="h2"><input type="text" name="<?php echo $this->field_name( 'zaringate_merchant' ); ?>" id="<?php echo $this->field_id( 'zaringate_merchant' ); ?>" value="<?php echo $prefs['zaringate_merchant']; ?>" class="long" /></div>
 						</li>
 					</ol>
-					<label class="subheader" for="<?php echo $this->field_id( 'zarinpal_name' ); ?>"><?php _e( 'نام نمایشی درگاه', 'mycred' ); ?></label>
+					<label class="subheader" for="<?php echo $this->field_id( 'zaringate_name' ); ?>"><?php _e( 'نام نمایشی درگاه', 'mycred' ); ?></label>
 					<ol>
 						<li>
-							<div class="h2"><input type="text" name="<?php echo $this->field_name( 'zarinpal_name' ); ?>" id="<?php echo $this->field_id( 'zarinpal_name' ); ?>" value="<?php echo $prefs['zarinpal_name'] ? $prefs['zarinpal_name'] : 'زرین پال'; ?>"  /></div>
+							<div class="h2"><input type="text" name="<?php echo $this->field_name( 'zaringate_name' ); ?>" id="<?php echo $this->field_id( 'zaringate_name' ); ?>" value="<?php echo $prefs['zaringate_name'] ? $prefs['zaringate_name'] : 'زرین گیت'; ?>"  /></div>
 						</li>
 					</ol>
 					<label class="subheader" for="<?php echo $this->field_id( 'currency' ); ?>"><?php _e( 'Currency', 'mycred' ); ?></label>
 					<ol>
 						<li>
-							<?php $this->currencies_dropdown( 'currency', 'mycred-gateway-zarinpal-currency' ); ?>
+							<?php $this->currencies_dropdown( 'currency', 'mycred-gateway-zaringate-currency' ); ?>
 						</li>
 					</ol>
-					<label class="subheader" for="<?php echo $this->field_id( 'server' ); ?>"><?php _e( 'سرور زرین پال', 'mycred' ); ?></label>
+					<label class="subheader" for="<?php echo $this->field_id( 'server' ); ?>"><?php _e( 'سرور زرین گیت', 'mycred' ); ?></label>
 					<ol>
 						<li>
 							<select name="<?php echo $this->field_name( 'server' ); ?>" id="<?php echo $this->field_id( 'server' ); ?>">
@@ -133,8 +133,8 @@ function mycred_zarinpal_loader(){
 				*/
 				public function sanitise_preferences( $data ) {
 
-					$new_data['zarinpal_merchant'] = sanitize_text_field( $data['zarinpal_merchant'] );
-					$new_data['zarinpal_name'] = sanitize_text_field( $data['zarinpal_name'] );
+					$new_data['zaringate_merchant'] = sanitize_text_field( $data['zaringate_merchant'] );
+					$new_data['zaringate_name'] = sanitize_text_field( $data['zaringate_name'] );
 					$new_data['currency'] = sanitize_text_field( $data['currency'] );
 					$new_data['item_name'] = sanitize_text_field( $data['item_name'] );
 					$new_data['server'] = sanitize_text_field( $data['server'] );
@@ -148,7 +148,7 @@ function mycred_zarinpal_loader(){
 					}
 					$new_data['exchange'] = $data['exchange'];
 			
-					update_option('zarinpal_name', $new_data['zarinpal_name']);
+					update_option('zaringate_name', $new_data['zaringate_name']);
 			
 					return $data;
 				}
@@ -159,7 +159,7 @@ function mycred_zarinpal_loader(){
 				* @version 1.1
 				*/
 				public function buy() {
-					if ( ! isset( $this->prefs['zarinpal_merchant'] ) || empty( $this->prefs['zarinpal_merchant'] ) )
+					if ( ! isset( $this->prefs['zaringate_merchant'] ) || empty( $this->prefs['zaringate_merchant'] ) )
 						wp_die( __( 'Please setup this gateway before attempting to make a purchase!', 'mycred' ) );
 
 					// Type
@@ -204,7 +204,7 @@ function mycred_zarinpal_loader(){
 					$buyername = strlen($buyername) > 2 ? "|".$buyername : "";
 			
 			
-					$MerchantID = $this->prefs['zarinpal_merchant'];  
+					$MerchantID = $this->prefs['zaringate_merchant'];  
 					$Amount = ($this->prefs['currency'] == 'تومان') ? $cost : ($cost/10);
 					$Description = $item_name.$buyername;
 					$Description = $Description ? $Description : "خرید اعتبار";
@@ -223,10 +223,10 @@ function mycred_zarinpal_loader(){
 									'CallbackURL' 	=> $CallbackURL
 								)
 					);
-					//Redirect to Zarinpal
+					//Redirect to Zaringate
 					if($result->Status == 100)
 					{
-						Header('Location: https://www.zarinpal.com/pg/StartPay/'.$result->Authority);
+						Header('Location: https://www.zarinpal.com/pg/StartPay/'.$result->Authority.'ZarinGate');
 					} 
 					else 
 					{	
@@ -246,7 +246,7 @@ function mycred_zarinpal_loader(){
 				*/
 				public function process() {
 					// Required fields
-					if (  isset($_REQUEST['payment-id']) && isset($_REQUEST['mycred_call']) && $_REQUEST['mycred_call'] == 'zarinpal') 
+					if (  isset($_REQUEST['payment-id']) && isset($_REQUEST['mycred_call']) && $_REQUEST['mycred_call'] == 'zaringate') 
 					{	
 						$new_call = array();
 						$redirect = $this->get_cancelled("");
@@ -256,7 +256,7 @@ function mycred_zarinpal_loader(){
 						$cost = $pending_payment['cost'];
 						if ( $pending_payment !== false ) {
 					
-							$MerchantID = $this->prefs['zarinpal_merchant'];  
+							$MerchantID = $this->prefs['zaringate_merchant'];  
 							$Amount = ($this->prefs['currency'] == 'تومان') ? $cost : ($cost/10);
 							$Authority = $_GET['Authority'];
 							if($_GET['Status'] == 'OK'){
@@ -306,12 +306,12 @@ function mycred_zarinpal_loader(){
 				* @version 1.0
 				*/
 				public function returning() { 
-					if (  isset($_REQUEST['payment-id']) && isset($_REQUEST['mycred_call']) && $_REQUEST['mycred_call'] == 'zarinpal') 
+					if (  isset($_REQUEST['payment-id']) && isset($_REQUEST['mycred_call']) && $_REQUEST['mycred_call'] == 'zaringate') 
 					{
 						// DO Some Actions
 					}
 				}
-
+	
 
 				private static function Fault($err_code){
 					$message = " ";
@@ -322,7 +322,7 @@ function mycred_zarinpal_loader(){
 						break;
 
 						case "-2" :
-							$message = "آی پی یا مرچنت زرین پال اشتباه است .";
+							$message = "آی پی یا مرچنت زرین گیت اشتباه است .";
 						break;
 
 						case "-3" :
@@ -356,7 +356,7 @@ function mycred_zarinpal_loader(){
 						case "-54" :
 							$message = "درخواست مورد نظر آرشیو شده است .";
 						break;
-													
+												
 						case "100" :
 							$message = "تراکنش با موفقیت به پایان رسید .";
 						break;
