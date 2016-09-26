@@ -2,13 +2,14 @@
 /**
 * Plugin Name: درگاه زرین گیت myCRED
 * Description: این افزونه درگاه زرین گیت را به افزونه myCRED اضافه میکند .
-* Version: 1.0.0
+* Version: 1.2.0
 * Author: حنان ابراهیمی ستوده
 * Author URI: http://hannanstd.ir
-* Tested up to: 4.1
+* Tested up to: 4.6
 */
-require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
-if ( is_plugin_active('mycred/mycred.php') && defined( 'myCRED_VERSION' ) && class_exists( 'myCRED_Payment_Gateway' ) ) {
+
+add_action('plugins_loaded','mycred_zaringate_plugins_loaded');
+function mycred_zaringate_plugins_loaded(){
 	
     add_filter('mycred_setup_gateways', 'Add_Zaringate_to_Gateways_By_HANNANStd');
 	function Add_Zaringate_to_Gateways_By_HANNANStd($installed) {    
@@ -19,20 +20,24 @@ if ( is_plugin_active('mycred/mycred.php') && defined( 'myCRED_VERSION' ) && cla
         return $installed;
     }
 
-	
-	if ( class_exists( 'myCRED_buyCRED_Module' ) ) {
-		add_filter('mycred_buycred_refs', 'Add_Zaringate_to_Buycred_Refs_By_HANNANStd');
-		function Add_Zaringate_to_Buycred_Refs_By_HANNANStd($addons ) {    
-			$addons['buy_creds_with_zaringate']          = __( 'buyCRED Purchase (ZarinpGate)', 'mycred' );
-			return $addons;
-		}
+	add_filter('mycred_buycred_refs', 'Add_Zaringate_to_Buycred_Refs_By_HANNANStd');
+	function Add_Zaringate_to_Buycred_Refs_By_HANNANStd($addons ) {    
+		$addons['buy_creds_with_zaringate']          = __( 'buyCRED Purchase (ZarinGate)', 'mycred' );
+		return $addons;
 	}
 	
 	add_filter('mycred_buycred_log_refs', 'Add_Zaringate_to_Buycred_Log_Refs_By_HANNANStd');
-	function Add_Zaringate_to_Buycred_Log_Refs_By_HANNANStd( $references, $this, $type ) {
+	function Add_Zaringate_to_Buycred_Log_Refs_By_HANNANStd( $refs ) {
 		$zaringate = array('buy_creds_with_zaringate');
-		return array_merge($references, $zaringate);
+		return $refs = array_merge($refs, $zaringate);
 	}
+}
+	
+spl_autoload_register('mycred_zaringate_plugin');
+function mycred_zaringate_plugin(){
+	
+	if ( ! class_exists( 'myCRED_Payment_Gateway' ) ) 
+		return;
 
 	if ( !class_exists( 'myCred_Zaringate' ) ) {
 		class myCred_Zaringate extends myCRED_Payment_Gateway {
@@ -195,8 +200,7 @@ if ( is_plugin_active('mycred/mycred.php') && defined( 'myCRED_VERSION' ) && cla
 	
 				$from_user = get_userdata( $from );
 			
-				$return_url = $this->callback_url()."&payment-id=".$this->transaction_id;
-			
+				$return_url =  add_query_arg('payment_id', $this->transaction_id, $this->callback_url());
 			
 				$buyername = $from_user->first_name . " " . $from_user->last_name;
 				$buyername = strlen($buyername) > 2 ? "|".$buyername : "";
@@ -204,6 +208,7 @@ if ( is_plugin_active('mycred/mycred.php') && defined( 'myCRED_VERSION' ) && cla
 			
 				$MerchantID = $this->prefs['zaringate_merchant'];  
 				$Amount = ($this->prefs['currency'] == 'تومان') ? $cost : ($cost/10);
+				$Amount = intval( str_replace( ',' , '', $Amount) );
 				$Description = $item_name.$buyername;
 				$Description = $Description ? $Description : "خرید اعتبار";
 				$CallbackURL = $return_url;
@@ -244,18 +249,24 @@ if ( is_plugin_active('mycred/mycred.php') && defined( 'myCRED_VERSION' ) && cla
 			*/
 			public function process() {
 				// Required fields
-				if (  isset($_REQUEST['payment-id']) && isset($_REQUEST['mycred_call']) && $_REQUEST['mycred_call'] == 'zaringate') 
+				if (  isset($_REQUEST['payment_id']) && isset($_REQUEST['mycred_call']) && $_REQUEST['mycred_call'] == 'zaringate') 
 				{	
 					$new_call = array();
 					$redirect = $this->get_cancelled("");
 					// Get Pending Payment
-					$pending_post_id = sanitize_key( $_REQUEST['payment-id'] );
-					$pending_payment = $this->get_pending_payment( $pending_post_id );
-					$cost = $pending_payment['cost'];
+					$pending_post_id = sanitize_key( $_REQUEST['payment_id'] );
+					$org_pending_payment = $pending_payment = $this->get_pending_payment( $pending_post_id );
+					
+					if (is_object($pending_payment))
+						$pending_payment = (array) $pending_payment;
+					
 					if ( $pending_payment !== false ) {
 					
-						$MerchantID = $this->prefs['zaringate_merchant'];  
+						$cost = ( str_replace( ',' , '', $pending_payment['cost']) );
+						$cost = (int) $cost;
 						$Amount = ($this->prefs['currency'] == 'تومان') ? $cost : ($cost/10);
+						
+						$MerchantID = $this->prefs['zaringate_merchant'];  
 						$Authority = $_GET['Authority'];
 						if($_GET['Status'] == 'OK'){
 							$Server = ($this->prefs['server'] == 'Iran' ) ? 'https://ir.zarinpal.com/pg/services/WebGate/wsdl' : 'https://de.zarinpal.com/pg/services/WebGate/wsdl';
@@ -269,7 +280,7 @@ if ( is_plugin_active('mycred/mycred.php') && defined( 'myCRED_VERSION' ) && cla
 							);
 							
 							if($result->Status == 100){
-								if ( $this->complete_payment( $pending_payment, $result->RefID ) ) {
+								if ( $this->complete_payment( $org_pending_payment, $result->RefID ) ) {
 									$new_call[] = sprintf( __( 'تراکنش با موفقیت به پایان رسید . کد رهگیری : %s', 'mycred' ), $result->RefID );
 									$this->trash_pending_payment( $pending_post_id );
 									$redirect = $this->get_thankyou();
@@ -304,7 +315,7 @@ if ( is_plugin_active('mycred/mycred.php') && defined( 'myCRED_VERSION' ) && cla
 			* @version 1.0
 			*/
 			public function returning() { 
-				if (  isset($_REQUEST['payment-id']) && isset($_REQUEST['mycred_call']) && $_REQUEST['mycred_call'] == 'zaringate') 
+				if (  isset($_REQUEST['payment_id']) && isset($_REQUEST['mycred_call']) && $_REQUEST['mycred_call'] == 'zaringate') 
 				{
 					// DO Some Actions
 				}
@@ -365,9 +376,7 @@ if ( is_plugin_active('mycred/mycred.php') && defined( 'myCRED_VERSION' ) && cla
 				}
 				return $message;
 			}
-
 		}
-
 	}
 }
 ?>
